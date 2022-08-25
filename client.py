@@ -23,7 +23,7 @@ import random
 #use uma das 3 opcoes para atribuir à variável a porta usada
 #serialName = "/dev/ttyACM0"           # Ubuntu (variacao de)
 #serialName = "/dev/tty.usbmodem1411" # Mac    (variacao de)
-serialName = "COM11"                  # Windows(variacao de)
+serialName = "COM6"                  # Windows(variacao de)
 
 
 def main():
@@ -36,6 +36,10 @@ def main():
     
         # Ativa comunicacao. Inicia os threads e a comunicação seiral 
         com1.enable()
+        time.sleep(.2)
+        com1.sendData(b'00')
+        time.sleep(1)
+
         #Se chegamos até aqui, a comunicação foi aberta com sucesso. Faça um print para informar.
         print("Abriu a comunicação")
         
@@ -54,9 +58,10 @@ def main():
         for i in range(0,length):
             txBuffer += random.choice(comandos) + b"\x45"
 
-        txBuffer = b"\xEE"
+        txBuffer += b"\xEE"
 
         print("meu array de bytes tem tamanho {}" .format(len(txBuffer)))
+        print(f"Comandos: {txBuffer}")
         #faça aqui uma conferência do tamanho do seu txBuffer, ou seja, quantos bytes serão enviados.
        
             
