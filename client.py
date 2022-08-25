@@ -13,6 +13,7 @@
 from enlace import *
 import time
 import numpy as np
+import random
 
 # voce deverá descomentar e configurar a porta com através da qual ira fazer comunicaçao
 #   para saber a sua porta, execute no terminal :
@@ -43,10 +44,18 @@ def main():
         #aqui você deverá gerar os dados a serem transmitidos. 
         #seus dados a serem transmitidos são um array bytes a serem transmitidos. Gere esta lista com o 
         #nome de txBuffer. Esla sempre irá armazenar os dados a serem enviados.
+
+        comandos = [b"\x00\xFA\x00\x00",b"\x00\x00\xFA\x00",b"\xFA\x00\x00",b"\x00\xFA\x00",b"\x00\x00\xFA",b"\x00\xFA",b"\xFA\x00",b"\xFA",b"\x00"]
         
         #txBuffer = imagem em bytes!
-        txBuffer = b'\x12\x13\xAA'  #isso é um array de bytes
-       
+        length = random.randint(10,30)
+        txBuffer = b"\xCC"
+
+        for i in range(0,length):
+            txBuffer += random.choice(comandos) + b"\x45"
+
+        txBuffer = b"\xEE"
+
         print("meu array de bytes tem tamanho {}" .format(len(txBuffer)))
         #faça aqui uma conferência do tamanho do seu txBuffer, ou seja, quantos bytes serão enviados.
        
@@ -61,6 +70,8 @@ def main():
           
         # A camada enlace possui uma camada inferior, TX possui um método para conhecermos o status da transmissão
         # O método não deve estar fincionando quando usado como abaixo. deve estar retornando zero. Tente entender como esse método funciona e faça-o funcionar.
+        while(com1.tx.getIsBussy()):
+            pass
         txSize = com1.tx.getStatus()
         print('enviou = {}' .format(txSize))
         
@@ -72,14 +83,12 @@ def main():
         #Veja o que faz a funcao do enlaceRX  getBufferLen
       
         #acesso aos bytes recebidos
-        txLen = len(txBuffer)
-        rxBuffer, nRx = com1.getData(txLen)
-        print("recebeu {} bytes" .format(len(rxBuffer)))
+        #txLen = len(txBuffer)
+        #rxBuffer, nRx = com1.getData(txLen)
+        #print("recebeu {} bytes" .format(len(rxBuffer)))
         
-        for i in range(len(rxBuffer)):
-            print("recebeu {}" .format(rxBuffer[i]))
-        
-
+        #for i in range(len(rxBuffer)):
+        #    print("recebeu {}" .format(rxBuffer[i]))
             
     
         # Encerra comunicação
@@ -93,7 +102,5 @@ def main():
         print(erro)
         com1.disable()
         
-
-    #so roda o main quando for executado do terminal ... se for chamado dentro de outro modulo nao roda
 if __name__ == "__main__":
     main()
