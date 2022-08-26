@@ -23,7 +23,7 @@ import random
 #use uma das 3 opcoes para atribuir à variável a porta usada
 #serialName = "/dev/ttyACM0"           # Ubuntu (variacao de)
 #serialName = "/dev/tty.usbmodem1411" # Mac    (variacao de)
-serialName = "COM11"                  # Windows(variacao de)
+serialName = "COM3"                  # Windows(variacao de)
 
 
 def main():
@@ -39,6 +39,11 @@ def main():
         #Se chegamos até aqui, a comunicação foi aberta com sucesso. Faça um print para informar.
         print("Abriu a comunicação")
 
+        print("esperando 1 byte de sacrifício")
+        rxBuffer, nRx = com1.getData(1)
+        com1.rx.clearBuffer()
+        time.sleep(.1)
+
         startAll = b"\xCC"
         endAll = b"\xEE"
         sep = b"\x45"
@@ -50,7 +55,7 @@ def main():
 
         firstInd = data.find(b"\xCC")
         lastInd = data.find(b"\xEE")
-        data = data[firstInd+1:lastInd]
+        data = data[firstInd+1:lastInd-1]
         data = data.split(sep)
 
         print(f'Recebeu {len(data)} comandos')
