@@ -61,14 +61,10 @@ def main():
         print(f'Recebeu {len(data)} comandos')
         print(data)    
       
-        #acesso aos bytes recebidos
-        #txLen = len(txBuffer)
-        #rxBuffer, nRx = com1.getData(txLen)
-        #print("recebeu {} bytes" .format(len(rxBuffer)))
-        
-        #for i in range(len(rxBuffer)):
-        #    print("recebeu {}" .format(rxBuffer[i]))
-            
+        # Envio da confirmacao
+        print('Enviando confirmacao')
+        msg = int.to_bytes(len(data),byteorder='big',length=3)
+        com1.sendData(msg)      
     
         # Encerra comunicação
         print("-------------------------")
