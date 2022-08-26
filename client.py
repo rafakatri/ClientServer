@@ -53,10 +53,11 @@ def main():
         
         #txBuffer = imagem em bytes!
         length = random.randint(10,30)
-        txBuffer = b"\xCC"
+        txBuffer = b""
 
         for i in range(0,length):
-            txBuffer += random.choice(comandos) + b"\x45"
+            cmd = random.choice(comandos)
+            txBuffer += bytes(len(cmd)) + cmd
 
         txBuffer += b"\xEE"
 
