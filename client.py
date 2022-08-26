@@ -23,7 +23,7 @@ import random
 #use uma das 3 opcoes para atribuir à variável a porta usada
 #serialName = "/dev/ttyACM0"           # Ubuntu (variacao de)
 #serialName = "/dev/tty.usbmodem1411" # Mac    (variacao de)
-serialName = "COM6"                  # Windows(variacao de)
+serialName = "COM5"                  # Windows(variacao de)
 
 
 def main():
@@ -53,11 +53,13 @@ def main():
         
         #txBuffer = imagem em bytes!
         length = random.randint(10,30)
+        print(length)
         txBuffer = b"\xCC"
 
         for i in range(0,length):
-            txBuffer += random.choice(comandos) + b"\x45"
-
+            cmd = random.choice(comandos)
+            txBuffer += cmd + b"\x45"
+        
         txBuffer += b"\xEE"
 
         print("meu array de bytes tem tamanho {}" .format(len(txBuffer)))
