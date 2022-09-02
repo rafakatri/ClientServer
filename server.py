@@ -23,7 +23,7 @@ import random
 #use uma das 3 opcoes para atribuir à variável a porta usada
 #serialName = "/dev/ttyACM0"           # Ubuntu (variacao de)
 #serialName = "/dev/tty.usbmodem1411" # Mac    (variacao de)
-serialName = "COM3"                  # Windows(variacao de)
+serialName = "COM6"                  # Windows(variacao de)
 
 
 def main():
@@ -63,8 +63,8 @@ def main():
       
         # Envio da confirmacao
         print('Enviando confirmacao')
-        msg = int.to_bytes(len(data),byteorder='big',length=3)
-        com1.sendData(msg)      
+        msg = int.to_bytes(len(data),byteorder='big',length=1)
+        com1.sendData(msg)    
     
         # Encerra comunicação
         print("-------------------------")

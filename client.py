@@ -23,7 +23,7 @@ import random
 #use uma das 3 opcoes para atribuir à variável a porta usada
 #serialName = "/dev/ttyACM0"           # Ubuntu (variacao de)
 #serialName = "/dev/tty.usbmodem1411" # Mac    (variacao de)
-serialName = "COM4"                  # Windows(variacao de)
+serialName = "COM5"                  # Windows(variacao de)
 
 
 def main():
@@ -56,7 +56,7 @@ def main():
 
         # Numero de comandos a ser utilizados
         length = random.randint(10,30)
-        print(f"O numero de comandos sera {length}")
+        print(f"Numero de comandos -> {length}")
 
         # Byte startAll
         txBuffer = b"\xCC"
@@ -82,24 +82,22 @@ def main():
         print("Esperando confirmacao")
         
         then = time.time()
-
-        rxdata, nrx = com1.getData(len(int.to_bytes(length,byteorder='big',length=3)))
-
-        deu_certo = False 
-
-        while (time.time() - then < 5):
-            if int.from_bytes(rxdata,byteorder='big') == length:
-                print(f"A confirmacao demorou {time.time() - then}")
-                print(f"O numero bateu")
-                deu_certo = True
-                break
-
-        if not(deu_certo):
-            if nrx > 0:
-                print("Erro de servidor")
-            else:
+            
+        deu_certo = False
+        
+        while True:
+            if (time.time() - then > 5):
                 print('Timeout')
-    
+                break
+            if com1.rx.getBufferLen()>0: 
+                rxdata, nrx = com1.getData(1)
+                if int.from_bytes(rxdata,byteorder='big') == length:
+                    print(f"A confirmacao demorou {time.time() - then}")
+                    print(f"O numero bateu")
+                else:
+                    print("Erro de servidor")
+                break
+            
         # Encerra comunicação
         print("-------------------------")
         print("Comunicação encerrada")
