@@ -14,6 +14,7 @@ from enlace import *
 import time
 import numpy as np
 import random
+from pacote import build_pacote
 
 # voce deverá descomentar e configurar a porta com através da qual ira fazer comunicaçao
 #   para saber a sua porta, execute no terminal :
@@ -50,23 +51,11 @@ def main():
         #seus dados a serem transmitidos são um array bytes a serem transmitidos. Gere esta lista com o 
         #nome de txBuffer. Esla sempre irá armazenar os dados a serem enviados.
 
-        comandos = [b"\x00\xFA\x00\x00",b"\x00\x00\xFA\x00",b"\xFA\x00\x00",b"\x00\xFA\x00",b"\x00\x00\xFA",b"\x00\xFA",b"\xFA\x00",b"\xFA",b"\x00"]
-        
         #txBuffer = Mensagem a ser enviada
 
-        # Numero de comandos a ser utilizados
-        length = random.randint(10,30)
-        print(f"Numero de comandos -> {length}")
 
         # Byte startAll
-        txBuffer = b"\xCC"
-
-        for i in range(0,length):
-            cmd = random.choice(comandos)
-            txBuffer += cmd + b"\x45"
-        
-        # Byte endAll
-        txBuffer += b"\xEE"
+        txBuffer = build_pacote(0, 1, 1)
 
         print("meu array de bytes tem tamanho {}" .format(len(txBuffer)))
         print(f"Comandos: {txBuffer}")
@@ -84,7 +73,7 @@ def main():
         then = time.time()
             
         deu_certo = False
-        
+        ]
         while True:
             if (time.time() - then > 5):
                 print('Timeout')

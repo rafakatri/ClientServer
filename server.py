@@ -14,6 +14,7 @@ from enlace import *
 import time
 import numpy as np
 import random
+from pacote import build_pacote
 
 # voce deverá descomentar e configurar a porta com através da qual ira fazer comunicaçao
 #   para saber a sua porta, execute no terminal :
@@ -23,7 +24,7 @@ import random
 #use uma das 3 opcoes para atribuir à variável a porta usada
 #serialName = "/dev/ttyACM0"           # Ubuntu (variacao de)
 #serialName = "/dev/tty.usbmodem1411" # Mac    (variacao de)
-serialName = "COM6"                  # Windows(variacao de)
+serialName = "COM5"                  # Windows(variacao de)
 
 
 def main():
@@ -43,28 +44,23 @@ def main():
         rxBuffer, nRx = com1.getData(1)
         com1.rx.clearBuffer()
         time.sleep(.1)
-
-        startAll = b"\xCC"
-        endAll = b"\xEE"
-        sep = b"\x45"
-
+        data=b''
+        i=1
+        
         while True:
-            data = com1.rx.buffer
-            if startAll in data and endAll in data:
-                break
+            if com1.rx.getBufferLen()>0:
+                head=com1.getData(10)
+                if head[0]==b'\x00':
+                    response = build_pacote(1,1,1)
+                elif head[0]==b'\x05':
+                    payload=com1.getData(head[3])
+                    eop=com1.getData(4)
+                com1.sendData(response)
 
-        firstInd = data.find(b"\xCC")
-        lastInd = data.find(b"\xEE")
-        data = data[firstInd+1:lastInd-1]
-        data = data.split(sep)
-
-        print(f'Recebeu {len(data)} comandos')
-        print(data)    
-      
         # Envio da confirmacao
         print('Enviando confirmacao')
         msg = int.to_bytes(len(data),byteorder='big',length=1)
-        com1.sendData(msg)    
+        com1.sendData(msg)
     
         # Encerra comunicação
         print("-------------------------")
