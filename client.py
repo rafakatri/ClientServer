@@ -104,11 +104,11 @@ def main():
             while ind < len(segments):
                 com1.rx.clearBuffer()
                 # Envia pacote
-                """if isFirst and ind==2:
+                '''if isFirst and ind==2:
                     pacote_quebrado=build_pacote(5, ind+1, len(segments), payload=segments[ind],tamanho_quebrado=True)
                     com1.sendData(pacote_quebrado)
                     isFirst=False
-                else:"""
+                else:''' # erro de payload
                 com1.sendData(build_pacote(5, ind+1, len(segments), payload=segments[ind]))
                     
                 print(f"Pacote {ind+1} enviado")
@@ -120,16 +120,16 @@ def main():
                         print(rxBuffer)
                         if check_data_header_client(rxBuffer,ind+1,len(segments)):
                             print(f"ACK {ind+1} recebido")
-                            if ind == 2 and isFirst:
+                            '''if ind == 2 and isFirst:
                                 ind+=2
                                 isFirst = False
                             else:
-                                ind += 1
-                            #ind+=1
+                                ind += 1''' # erro de indice
+                            ind+=1
                             break
                         else:
                             print(f"ACK {ind+1} não recebido")
-                            ind = rxBuffer[1] - 1
+                            ind = rxBuffer[1]
                         
                             
                         com1.rx.clearBuffer()
