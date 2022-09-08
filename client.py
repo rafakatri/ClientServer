@@ -73,6 +73,7 @@ def main():
         print("O número de pacotes é {}" .format(len(segments)))
 
         ind = 0
+        isFirst=True
         isHandshaken = False
         isDenied = False
             
@@ -83,12 +84,16 @@ def main():
             while time.time() - then < 5:
                 if com1.rx.getIsEmpty() == False:
                     rxBuffer, nRx = com1.getData(10)
-                    if int.from_bytes(rxBuffer[0],byteorder='big') == 1:
+                    if rxBuffer[0] == 1:
                         print("Handshake realizado com sucesso")
                         isHandshaken = True
                         break
                     # Limpa o payload e EoP do pacote
                     com1.rx.clearBuffer()
+                    
+            if isHandshaken:
+                break
+            
             txt = input("Deseja continuar? (s/n)")
             if txt.lower() == 'n':
                 isDenied = True
@@ -97,19 +102,36 @@ def main():
 
         if not isDenied:
             while ind < len(segments):
+                com1.rx.clearBuffer()
                 # Envia pacote
+                """if isFirst and ind==2:
+                    pacote_quebrado=build_pacote(5, ind+1, len(segments), payload=segments[ind],tamanho_quebrado=True)
+                    com1.sendData(pacote_quebrado)
+                    isFirst=False
+                else:"""
                 com1.sendData(build_pacote(5, ind+1, len(segments), payload=segments[ind]))
-                print("Pacote {} enviado" .format(ind+1))
+                    
+                print(f"Pacote {ind+1} enviado")
                 # Espera ACK
                 then = time.time()
                 while time.time() - then < 5:
                     if com1.rx.getIsEmpty() == False:
                         rxBuffer, nRx = com1.getData(10)
+                        print(rxBuffer)
                         if check_data_header_client(rxBuffer,ind+1,len(segments)):
-                            print("ACK {} recebido" .format(ind+1))
-                            ind += 1
+                            print(f"ACK {ind+1} recebido")
+                            if ind == 2 and isFirst:
+                                ind+=2
+                                isFirst = False
+                            else:
+                                ind += 1
+                            #ind+=1
                             break
-                        print("ACK {} não recebido" .format(ind+1))
+                        else:
+                            print(f"ACK {ind+1} não recebido")
+                            ind = rxBuffer[1] - 1
+                        
+                            
                         com1.rx.clearBuffer()
                     
 

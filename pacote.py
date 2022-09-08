@@ -1,4 +1,4 @@
-def build_pacote(operacao,numeroAtual,numeroTotal,payload=b''):
+def build_pacote(operacao,numeroAtual,numeroTotal,payload=b'',tamanho_quebrado=False):
     pacote=b''
     pacote+=int.to_bytes(operacao, 1, 'big') # head 0 
     pacote+=int.to_bytes(numeroAtual, 1, 'big') # head 1
@@ -6,15 +6,17 @@ def build_pacote(operacao,numeroAtual,numeroTotal,payload=b''):
 
     payload_size=int.to_bytes(len(payload), 1, 'big')
     
+    if tamanho_quebrado:
+        payload_size=int.to_bytes(len(payload)-1, 1, 'big')
     pacote+=payload_size # head 3
     
     total=0
+    
     for el in payload:
         total+=el
         
     checksum_array=int.to_bytes(total, 4,'big')
     pacote+=checksum_array # head 4,5,6,7
-    print(checksum_array)
     pacote+=b'\x00\x00' #head 8,9
     
     pacote+=payload
@@ -24,11 +26,11 @@ def build_pacote(operacao,numeroAtual,numeroTotal,payload=b''):
     return pacote
 
 def check_data_header_client(package,ind,total):
-    if int.from_bytes(package[0],byteorder='big') != 3:
+    if package[0]!= 3 and package[0]!=4:
         return False
-    if int.from_bytes(package[1],byteorder='big') != ind:
+    if package[1] != ind:
         return False
-    if int.from_bytes(package[2],byteorder='big') != total:
+    if package[2] != total:
         return 
     return True
     
