@@ -23,6 +23,18 @@ def build_pacote(operacao,numeroAtual,numeroTotal,payload=b''):
     
     return pacote
 
+def check_data_header_client(package,ind,total):
+    if int.from_bytes(package[0],byteorder='big') != 3:
+        return False
+    if int.from_bytes(package[1],byteorder='big') != ind:
+        return False
+    if int.from_bytes(package[2],byteorder='big') != total:
+        return 
+    return True
+    
+    
+
+
 if __name__ =="__main__":
     print(build_pacote(1,1,2,payload=b'\xFF\xFF'))
     

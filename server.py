@@ -24,7 +24,7 @@ from pacote import build_pacote
 #use uma das 3 opcoes para atribuir à variável a porta usada
 #serialName = "/dev/ttyACM0"           # Ubuntu (variacao de)
 #serialName = "/dev/tty.usbmodem1411" # Mac    (variacao de)
-serialName = "COM5"                  # Windows(variacao de)
+serialName = "COM3"                  # Windows(variacao de)
 
 
 def main():
@@ -43,25 +43,40 @@ def main():
         print("esperando 1 byte de sacrifício")
         rxBuffer, nRx = com1.getData(1)
         com1.rx.clearBuffer()
-        time.sleep(.1)
-        data=b''
-        i=1
+        print("Recebeu o byte de sacrifício")
         
-        while True:
-            if com1.rx.getBufferLen()>0:
-                head=com1.getData(10)
-                if head[0]==b'\x00':
-                    response = build_pacote(1,1,1)
-                elif head[0]==b'\x05':
-                    payload=com1.getData(head[3])
-                    eop=com1.getData(4)
-                com1.sendData(response)
+        isHandshaken = False
+        data = bytearray()
 
-        # Envio da confirmacao
-        print('Enviando confirmacao')
-        msg = int.to_bytes(len(data),byteorder='big',length=1)
-        com1.sendData(msg)
-    
+        while not isHandshaken:
+            if com1.rx.getIsEmpty() == False:
+                rxBuffer, nRx = com1.getData(10)
+                if int.from_bytes(rxBuffer[0], byteorder='big') == 0:
+                    print("Handshake recebido")
+                    isHandshaken = True
+                    com1.sendData(build_pacote(1,1,1))
+                com1.rx.clearBuffer()
+
+        while True:
+            if com1.rx.getIsEmpty() == False:
+                rxBuffer, nRx = com1.getData(10)
+                if int.from_bytes(rxBuffer[0], byteorder='big') == 5:
+                    payload, nRx = com1.getData(int.from_bytes(rxBuffer[3], byteorder='big'))
+                    eop, = com1.getData(3)
+                    if eop == b'\x45\x69\x45\x69':
+                        data += payload
+                        if int.from_bytes(rxBuffer[1], byteorder='big') == int.from_bytes(rxBuffer[2], byteorder='big'):
+                            print("Recebeu todos os pacotes")
+                            com1.sendData(build_pacote(4,int.from_bytes(rxBuffer[1], byteorder='big'),int.from_bytes(rxBuffer[2], byteorder='big')))
+                            break
+                        else:
+                            print("Recebeu pacote")
+                            com1.sendData(build_pacote(3,int.from_bytes(rxBuffer[1], byteorder='big'),int.from_bytes(rxBuffer[2], byteorder='big')))       
+                com1.rx.clearBuffer()
+
+        with open("recebido.txt", "wb") as f:
+            f.write(data)
+
         # Encerra comunicação
         print("-------------------------")
         print("Comunicação encerrada")

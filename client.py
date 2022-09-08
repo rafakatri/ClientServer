@@ -14,7 +14,7 @@ from enlace import *
 import time
 import numpy as np
 import random
-from pacote import build_pacote
+from pacote import *
 
 # voce deverá descomentar e configurar a porta com através da qual ira fazer comunicaçao
 #   para saber a sua porta, execute no terminal :
@@ -55,38 +55,64 @@ def main():
 
 
         # Byte startAll
-        txBuffer = build_pacote(0, 1, 1)
+        txBuffer = bytearray()
+
+        with open("datagrama.txt", "rb") as f:
+            txBuffer += f.read()
 
         print("meu array de bytes tem tamanho {}" .format(len(txBuffer)))
-        print(f"Comandos: {txBuffer}")
-            
-        com1.sendData(np.asarray(txBuffer))  #as array apenas como boa pratica para casos de ter uma outra forma de dados
-          
-        while(com1.tx.getIsBussy()):
-            pass
-        txSize = com1.tx.getStatus()
-        print('enviou = {}' .format(txSize))
-
-        #Esperando confirmacao
-        print("Esperando confirmacao")
         
-        then = time.time()
+        # fragmentação da mensagem
+        number_of_segments = (len(txBuffer)//114)
+        segments = []
+        # Segmentos de 114 bytes
+        for i in range(number_of_segments):
+            segments.append(txBuffer[i*114:(i+1)*114])
+        # Segmento que sobra
+        segments.append(txBuffer[number_of_segments*114:])
+        print("O número de pacotes é {}" .format(len(segments)))
+
+        ind = 0
+        isHandshaken = False
+        isDenied = False
             
-        deu_certo = False
-        ]
-        while True:
-            if (time.time() - then > 5):
-                print('Timeout')
-                break
-            if com1.rx.getBufferLen()>0: 
-                rxdata, nrx = com1.getData(1)
-                if int.from_bytes(rxdata,byteorder='big') == length:
-                    print(f"A confirmacao demorou {time.time() - then}")
-                    print(f"O numero bateu")
-                else:
-                    print("Erro de servidor")
-                break
-            
+        while not isHandshaken:
+            then = time.time()
+            # Handshake
+            com1.sendData(build_pacote(0,1,1))
+            while time.time() - then < 5:
+                if com1.rx.getIsEmpty() == False:
+                    rxBuffer, nRx = com1.getData(10)
+                    if int.from_bytes(rxBuffer[0],byteorder='big') == 1:
+                        print("Handshake realizado com sucesso")
+                        isHandshaken = True
+                        break
+                    # Limpa o payload e EoP do pacote
+                    com1.rx.clearBuffer()
+            txt = input("Deseja continuar? (s/n)")
+            if txt.lower() == 'n':
+                isDenied = True
+                print("Comunicação negada")
+                break 
+
+        if not isDenied:
+            while ind < len(segments):
+                # Envia pacote
+                com1.sendData(build_pacote(5, ind+1, len(segments), payload=segments[ind]))
+                print("Pacote {} enviado" .format(ind+1))
+                # Espera ACK
+                then = time.time()
+                while time.time() - then < 5:
+                    if com1.rx.getIsEmpty() == False:
+                        rxBuffer, nRx = com1.getData(10)
+                        if check_data_header_client(rxBuffer,ind+1,len(segments)):
+                            print("ACK {} recebido" .format(ind+1))
+                            ind += 1
+                            break
+                        print("ACK {} não recebido" .format(ind+1))
+                        com1.rx.clearBuffer()
+                    
+
         # Encerra comunicação
         print("-------------------------")
         print("Comunicação encerrada")
