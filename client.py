@@ -24,7 +24,7 @@ from pacote import *
 #use uma das 3 opcoes para atribuir à variável a porta usada
 #serialName = "/dev/ttyACM0"           # Ubuntu (variacao de)
 #serialName = "/dev/tty.usbmodem1411" # Mac    (variacao de)
-serialName = "COM5"                  # Windows(variacao de)
+serialName = "COM6"                  # Windows(variacao de)
 
 
 def main():
@@ -105,7 +105,7 @@ def main():
                 com1.rx.clearBuffer()
                 # Envia pacote
                 '''if isFirst and ind==2:
-                    pacote_quebrado=build_pacote(5, ind+1, len(segments), payload=segments[ind],tamanho_quebrado=True)
+                    pacote_quebrado=build_pacote(5, ind+1, len(segments), payload=segments[ind],tamanho_quebrado=1)
                     com1.sendData(pacote_quebrado)
                     isFirst=False
                 else:''' # erro de payload

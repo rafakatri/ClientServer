@@ -1,4 +1,4 @@
-def build_pacote(operacao,numeroAtual,numeroTotal,payload=b'',tamanho_quebrado=False):
+def build_pacote(operacao,numeroAtual,numeroTotal,payload=b'',tamanho_quebrado=0):
     pacote=b''
     pacote+=int.to_bytes(operacao, 1, 'big') # head 0 
     pacote+=int.to_bytes(numeroAtual, 1, 'big') # head 1
@@ -6,8 +6,10 @@ def build_pacote(operacao,numeroAtual,numeroTotal,payload=b'',tamanho_quebrado=F
 
     payload_size=int.to_bytes(len(payload), 1, 'big')
     
-    if tamanho_quebrado:
+    if tamanho_quebrado==1:
         payload_size=int.to_bytes(len(payload)-1, 1, 'big')
+    if tamanho_quebrado==2:
+        payload_size=int.to_bytes(len(payload)+1, 1, 'big')
     pacote+=payload_size # head 3
     
     total=0
