@@ -47,11 +47,14 @@ def main():
         
         isHandshaken = False
         data = bytearray()
+        ind = 0
+
+        #time.sleep(20)
 
         while not isHandshaken:
             if com1.rx.getIsEmpty() == False:
                 rxBuffer, nRx = com1.getData(10)
-                if int.from_bytes(rxBuffer[0], byteorder='big') == 0:
+                if rxBuffer[0] == 0:
                     print("Handshake recebido")
                     isHandshaken = True
                     com1.sendData(build_pacote(1,1,1))
@@ -60,18 +63,27 @@ def main():
         while True:
             if com1.rx.getIsEmpty() == False:
                 rxBuffer, nRx = com1.getData(10)
-                if int.from_bytes(rxBuffer[0], byteorder='big') == 5:
-                    payload, nRx = com1.getData(int.from_bytes(rxBuffer[3], byteorder='big'))
-                    eop, = com1.getData(3)
-                    if eop == b'\x45\x69\x45\x69':
+                if rxBuffer[0] == 5:
+                    payload, nRx = com1.getData(rxBuffer[3])
+                    eop, nrx = com1.getData(4)
+                    print(rxBuffer[3])
+                    print(len(payload))
+                    if eop == b'\x45\x69\x45\x69' and rxBuffer[1] == ind+1 and len(payload) == rxBuffer[3]:
                         data += payload
-                        if int.from_bytes(rxBuffer[1], byteorder='big') == int.from_bytes(rxBuffer[2], byteorder='big'):
+                        if rxBuffer[1] == rxBuffer[2]:
                             print("Recebeu todos os pacotes")
-                            com1.sendData(build_pacote(4,int.from_bytes(rxBuffer[1], byteorder='big'),int.from_bytes(rxBuffer[2], byteorder='big')))
+                            com1.sendData(build_pacote(4,rxBuffer[1],rxBuffer[2]))
                             break
                         else:
-                            print("Recebeu pacote")
-                            com1.sendData(build_pacote(3,int.from_bytes(rxBuffer[1], byteorder='big'),int.from_bytes(rxBuffer[2], byteorder='big')))       
+                            print(f"Recebeu pacote {ind+1}")
+                            com1.sendData(build_pacote(3,rxBuffer[1],rxBuffer[2]))
+                            ind += 1
+                    else:
+                        print("Erro no pacote")
+                        if rxBuffer[1] != ind + 1:
+                            com1.sendData(build_pacote(2,rxBuffer[1] -2,rxBuffer[2]))
+                        else:
+                            com1.sendData(build_pacote(2,rxBuffer[1] - 1,rxBuffer[2]))
                 com1.rx.clearBuffer()
 
         with open("recebido.txt", "wb") as f:
