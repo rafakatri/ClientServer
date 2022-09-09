@@ -24,7 +24,7 @@ from pacote import build_pacote
 #use uma das 3 opcoes para atribuir à variável a porta usada
 #serialName = "/dev/ttyACM0"           # Ubuntu (variacao de)
 #serialName = "/dev/tty.usbmodem1411" # Mac    (variacao de)
-serialName = "COM3"                  # Windows(variacao de)
+serialName = "COM5"                  # Windows(variacao de)
 
 
 def main():
@@ -48,6 +48,7 @@ def main():
         isHandshaken = False
         data = bytearray()
         ind = 0
+        end = False
 
         #time.sleep(20)
 
@@ -60,30 +61,39 @@ def main():
                     com1.sendData(build_pacote(1,1,1))
                 com1.rx.clearBuffer()
 
-        while True:
+        while not end:
             if com1.rx.getIsEmpty() == False:
                 rxBuffer, nRx = com1.getData(10)
                 if rxBuffer[0] == 5:
-                    payload, nRx = com1.getData(rxBuffer[3])
-                    eop, nrx = com1.getData(4)
-                    print(rxBuffer[3])
-                    print(len(payload))
-                    if eop == b'\x45\x69\x45\x69' and rxBuffer[1] == ind+1 and len(payload) == rxBuffer[3]:
-                        data += payload
-                        if rxBuffer[1] == rxBuffer[2]:
-                            print("Recebeu todos os pacotes")
-                            com1.sendData(build_pacote(4,rxBuffer[1],rxBuffer[2]))
-                            break
-                        else:
-                            print(f"Recebeu pacote {ind+1}")
-                            com1.sendData(build_pacote(3,rxBuffer[1],rxBuffer[2]))
-                            ind += 1
+                    now = time.time()
+                    while time.time() - now < 5:
+                        if com1.rx.getBufferLen() >= rxBuffer[3]: 
+                            payload, nRx = com1.getData(rxBuffer[3])
+                            eop, nrx = com1.getData(4)
+                            print(eop)
+                            print(ind+1)
+                            print(rxBuffer[1])
+                            if eop == b'\x45\x69\x45\x69' and rxBuffer[1] == ind+1 and len(payload) == rxBuffer[3]:
+                                data += payload
+                                if rxBuffer[1] == rxBuffer[2]:
+                                    print("Recebeu todos os pacotes")
+                                    com1.sendData(build_pacote(4,rxBuffer[1],rxBuffer[2]))
+                                    end = True
+                                    break
+                                else:
+                                    print(f"Recebeu pacote {ind+1}")
+                                    com1.sendData(build_pacote(3,rxBuffer[1],rxBuffer[2]))
+                                    ind += 1
+                                    break
+                            else:
+                                print("Erro no pacote")
+                                if rxBuffer[1] != ind + 1:
+                                    com1.sendData(build_pacote(2,rxBuffer[1] -2,rxBuffer[2]))
+                                else:
+                                    com1.sendData(build_pacote(2,rxBuffer[1] - 1,rxBuffer[2]))
                     else:
-                        print("Erro no pacote")
-                        if rxBuffer[1] != ind + 1:
-                            com1.sendData(build_pacote(2,rxBuffer[1] -2,rxBuffer[2]))
-                        else:
-                            com1.sendData(build_pacote(2,rxBuffer[1] - 1,rxBuffer[2]))
+                        print("Timeout")
+                        com1.sendData(build_pacote(2,rxBuffer[1] - 1,rxBuffer[2]))
                 com1.rx.clearBuffer()
 
         with open("recebido.txt", "wb") as f:
