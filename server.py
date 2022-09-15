@@ -55,16 +55,16 @@ def main():
         while not isHandshaken:
             if com1.rx.getIsEmpty() == False:
                 rxBuffer, nRx = com1.getData(10)
-                if rxBuffer[0] == 0:
+                if rxBuffer[0] == 1: # if is request comunication start 
                     print("Handshake recebido")
                     isHandshaken = True
-                    com1.sendData(build_pacote(1,1,1))
+                    com1.sendData(build_pacote(2,1,1)) # accept communication start
                 com1.rx.clearBuffer()
 
         while not end:
             if com1.rx.getIsEmpty() == False:
                 rxBuffer, nRx = com1.getData(10)
-                if rxBuffer[0] == 5:
+                if rxBuffer[0] == 3: # if is data transmission
                     now = time.time()
                     while time.time() - now < 5:
                         if com1.rx.getBufferLen() >= rxBuffer[3]: 
@@ -73,27 +73,27 @@ def main():
                             print(eop)
                             print(ind+1)
                             print(rxBuffer[1])
-                            if eop == b'\x45\x69\x45\x69' and rxBuffer[1] == ind+1 and len(payload) == rxBuffer[3]:
+                            if eop == b'\xAA\xBB\xCC\xDD' and rxBuffer[4] == ind+1 and len(payload) == rxBuffer[5]:
                                 data += payload
-                                if rxBuffer[1] == rxBuffer[2]:
+                                if rxBuffer[4] == rxBuffer[3]:
                                     print("Recebeu todos os pacotes")
-                                    com1.sendData(build_pacote(4,rxBuffer[1],rxBuffer[2]))
+                                    com1.sendData(build_pacote(4,rxBuffer[1],rxBuffer[2])) #TODO
                                     end = True
                                     break
                                 else:
                                     print(f"Recebeu pacote {ind+1}")
-                                    com1.sendData(build_pacote(3,rxBuffer[1],rxBuffer[2]))
+                                    com1.sendData(build_pacote(4,rxBuffer[1],rxBuffer[2]))
                                     ind += 1
                                     break
                             else:
                                 print("Erro no pacote")
-                                if rxBuffer[1] != ind + 1:
-                                    com1.sendData(build_pacote(2,rxBuffer[1] -2,rxBuffer[2]))
+                                if rxBuffer[4] != ind + 1:
+                                    com1.sendData(build_pacote(6,rxBuffer[1] -2,rxBuffer[2]))
                                 else:
-                                    com1.sendData(build_pacote(2,rxBuffer[1] - 1,rxBuffer[2]))
+                                    com1.sendData(build_pacote(6,rxBuffer[1] - 1,rxBuffer[2]))
                     else:
                         print("Timeout")
-                        com1.sendData(build_pacote(2,rxBuffer[1] - 1,rxBuffer[2]))
+                        com1.sendData(build_pacote(5,rxBuffer[1] - 1,rxBuffer[2]))
                 com1.rx.clearBuffer()
 
         with open("recebido.txt", "wb") as f:
