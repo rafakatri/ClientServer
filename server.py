@@ -45,56 +45,67 @@ def main():
         com1.rx.clearBuffer()
         print("Recebeu o byte de sacrifício")
         
-        isHandshaken = False
+        ocioso = True
         data = bytearray()
-        ind = 0
         end = False
+        serverNumber=69 
 
         #time.sleep(20)
 
-        while not isHandshaken:
+        while ocioso:
             if com1.rx.getIsEmpty() == False:
                 rxBuffer, nRx = com1.getData(10)
-                if rxBuffer[0] == 1: # if is request comunication start 
+                if rxBuffer[0] == 1 and rxBuffer[5] == 69: # if is request comunication start 
                     print("Handshake recebido")
-                    isHandshaken = True
-                    com1.sendData(build_pacote(2,1,1)) # accept communication start
-                com1.rx.clearBuffer()
+                    ocioso = False
+                    time.sleep(1)
+        com1.sendData(build_pacote(2,1,1)) # accept communication start
+        cont = 0 # was 'ind'
+        com1.rx.clearBuffer()
 
         while not end:
             if com1.rx.getIsEmpty() == False:
                 rxBuffer, nRx = com1.getData(10)
                 if rxBuffer[0] == 3: # if is data transmission
-                    now = time.time()
-                    while time.time() - now < 5:
-                        if com1.rx.getBufferLen() >= rxBuffer[3]: 
-                            payload, nRx = com1.getData(rxBuffer[3])
-                            eop, nrx = com1.getData(4)
-                            print(eop)
-                            print(ind+1)
-                            print(rxBuffer[1])
-                            if eop == b'\xAA\xBB\xCC\xDD' and rxBuffer[4] == ind+1 and len(payload) == rxBuffer[5]:
-                                data += payload
-                                if rxBuffer[4] == rxBuffer[3]:
-                                    print("Recebeu todos os pacotes")
-                                    com1.sendData(build_pacote(4,rxBuffer[1],rxBuffer[2])) #TODO
-                                    end = True
-                                    break
+                    numPckg = rxBuffer[3]
+                    now2 = time.time()
+                    now1 = time.time()
+                    while time.time() - now2 < 20: # timer 2
+                        while time.time() - now1 < 2:# timer 1
+                            if com1.rx.getBufferLen() >= rxBuffer[3]: 
+                                payload, nRx = com1.getData(rxBuffer[3])
+                                eop, nrx = com1.getData(4)
+                                print(eop)
+                                print(cont+1)
+                                print(rxBuffer[1])
+                                if eop == b'\xAA\xBB\xCC\xDD' and rxBuffer[4] == cont+1 and len(payload) == rxBuffer[5]:
+                                    data += payload
+                                    if rxBuffer[4] == rxBuffer[3]:
+                                        print("Recebeu todos os pacotes")
+                                        com1.sendData(build_pacote(4,rxBuffer[1],rxBuffer[2])) #TODO
+                                        end = True
+                                        break
+                                    else:
+                                        print(f"Recebeu pacote {cont+1}")
+                                        com1.sendData(build_pacote(4,rxBuffer[1],rxBuffer[2]))
+                                        cont += 1
+                                        break
                                 else:
-                                    print(f"Recebeu pacote {ind+1}")
-                                    com1.sendData(build_pacote(4,rxBuffer[1],rxBuffer[2]))
-                                    ind += 1
-                                    break
-                            else:
-                                print("Erro no pacote")
-                                if rxBuffer[4] != ind + 1:
-                                    com1.sendData(build_pacote(6,rxBuffer[1] -2,rxBuffer[2]))
-                                else:
-                                    com1.sendData(build_pacote(6,rxBuffer[1] - 1,rxBuffer[2]))
+                                    print("Erro no pacote")
+                                    if rxBuffer[4] != cont + 1:
+                                        com1.sendData(build_pacote(6,rxBuffer[1] -2,rxBuffer[2]))
+                                    else:
+                                        com1.sendData(build_pacote(6,rxBuffer[1] - 1,rxBuffer[2]))
+                                    
+                        else:
+                            com1.sendData(build_pacote(4,1,1))
+                            now1 = time.time()
                     else:
                         print("Timeout")
+                        ocioso=True
                         com1.sendData(build_pacote(5,rxBuffer[1] - 1,rxBuffer[2]))
                 com1.rx.clearBuffer()
+                time.sleep(1)
 
         with open("recebido.txt", "wb") as f:
             f.write(data)
