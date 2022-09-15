@@ -1,30 +1,28 @@
-def build_pacote(operacao,numeroAtual,numeroTotal,payload=b'',tamanho_quebrado=0):
-    pacote=b''
-    pacote+=int.to_bytes(operacao, 1, 'big') # head 0 
-    pacote+=int.to_bytes(numeroAtual, 1, 'big') # head 1
-    pacote+=int.to_bytes(numeroTotal, 1, 'big') # head 2
+def build_pacote(operacao,numeroAtual,numeroTotal,id,lastPackage,payload=b'', isWrongIndex=False, rightIndex=0):
+    pacote = b''
+    pacote += int.to_bytes(operacao, 1, 'big') # head 0
+    pacote += b'\x00\x00' #head 1,2
+    pacote += int.to_bytes(numeroTotal, 1, 'big') #head 3
+    pacote += int.to_bytes(numeroAtual, 1, 'big') #head 4
 
-    payload_size=int.to_bytes(len(payload), 1, 'big')
-    
-    if tamanho_quebrado==1:
-        payload_size=int.to_bytes(len(payload)-1, 1, 'big')
-    if tamanho_quebrado==2:
-        payload_size=int.to_bytes(len(payload)+1, 1, 'big')
-    pacote+=payload_size # head 3
-    
-    total=0
-    
-    for el in payload:
-        total+=el
-        
-    checksum_array=int.to_bytes(total, 4,'big')
-    pacote+=checksum_array # head 4,5,6,7
-    pacote+=b'\x00\x00' #head 8,9
-    
-    pacote+=payload
-    
-    pacote+= b'\x45\x69\x45\x69' # EoP
-    
+    if operacao in [1,2]:
+        pacote += int.to_bytes(id, 1, 'big') #head 5
+    else:
+        pacote += int.to_bytes(len(payload), 1, 'big') #head 5
+
+    if isWrongIndex:
+        pacote += int.to_bytes(rightIndex, 1, 'big') #head 6
+    else:
+        pacote += int.to_bytes(0, 1, 'big') #head 6
+
+    pacote += int.to_bytes(lastPackage, 1, 'big') #head 7
+
+    pacote += b'\x00\x00' #head 8,9
+
+    pacote += payload
+
+    pacote += b'\xAA\xBB\xCC\xDD' #eop
+
     return pacote
 
 def check_data_header_client(package,ind,total):
