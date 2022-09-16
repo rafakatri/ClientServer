@@ -1,3 +1,5 @@
+import time
+
 def build_pacote(operacao,numeroAtual,numeroTotal,id,lastPackage,payload=b'', isWrongIndex=False, rightIndex=0):
     pacote = b''
     pacote += int.to_bytes(operacao, 1, 'big') # head 0
@@ -33,11 +35,37 @@ def check_data_header_client(package,ind,total):
     if package[2] != total:
         return 
     return True
+
+def build_log(pacote,send): 
+    """
+    Cria uma linha de texto com o log de um pacote
+
+    -pacote: pacote que o log ira descrever
+    -send: bool que indica se esta sendo enviado ou nao
+    -retorna o texto do log como string
+    """ 
+    log=''
+    log+=time.strftime('%X %x / ')
+    if send:
+        log+='envio / '
+    else:
+        log+='receb / '
+        
+    log+= f'type {pacote[0]} / '
+    
+    log+= f'{len(pacote)} bytes / '
+    
+    if pacote[0]==3:
+        log+=f'{pacote[4]} of '
+        log+=f'{pacote[3]} / '
+        
+    return log
     
     
 
 
 if __name__ =="__main__":
-    print(build_pacote(1,1,2,payload=b'\xFF\xFF'))
+    print(build_pacote(3,1,2,payload=b'\xFF\xFF',id=69,lastPackage=0))
+    print(build_log(build_pacote(3,1,2,payload=b'\xFF\xFF',id=69,lastPackage=0),True))
     
     
