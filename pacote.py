@@ -45,41 +45,27 @@ def build_log(pacote,send):
     -retorna o texto do log como string
     """ 
     log=''
+    
     log+=time.strftime('%X %x / ')
-    if send:
-        log+='envio / '
+    if type(pacote)==bool:
+        log+='Timeout error'
     else:
-        log+='receb / '
+        if send:
+            log+='envio / '
+        else:
+            log+='receb / '
+            
+        log+= f'type {pacote[0]} / '
         
-    log+= f'type {pacote[0]} / '
-    
-    log+= f'{len(pacote)} bytes / '
-    
-    if pacote[0]==3:
-        log+=f'{pacote[4]} of '
-        log+=f'{pacote[3]} / '
+        log+= f'{len(pacote)} bytes / '
         
+        if pacote[0]==3:
+            log+=f'{pacote[4]} of '
+            log+=f'{pacote[3]} / '
+        
+    log+='\n'
     return log
     
-def check_package():
-    global com1, data, cont, timer1, timer2, total_packages, serverNumber
-    if com1.rx.getIsEmpty() == False:
-                rxBuffer, nrx = com1.getData(10)
-                if rxBuffer[0] == 3:
-                    payload_overflow = False
-                    try:
-                        payload, nRx = com1.getData(rxBuffer[5])
-                        eop, nrx = com1.getData(4)
-                    except:
-                        payload_overflow = True
-                    finally:
-                        if eop != b'\xAA\xBB\xCC\xDD' or  payload_overflow or rxBuffer[4] != cont:
-                            com1.sendData(build_pacote(6,cont,total_packages,serverNumber,cont-1,isWrongIndex=True,rightIndex=cont))
-                        else:
-                            com1.sendData(build_pacote(4,cont,total_packages,serverNumber,cont-1))
-                            data += payload
-                            cont += 1
-
 """
 if com1.rx.getIsEmpty() == False:
                 rxBuffer, nrx = com1.getData(10)

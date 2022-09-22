@@ -14,7 +14,7 @@ from enlace import *
 import time
 import numpy as np
 import random
-from pacote import build_pacote,build_log, check_package
+from pacote import build_pacote,build_log
 
 # voce deverá descomentar e configurar a porta com através da qual ira fazer comunicaçao
 #   para saber a sua porta, execute no terminal :
@@ -24,7 +24,7 @@ from pacote import build_pacote,build_log, check_package
 #use uma das 3 opcoes para atribuir à variável a porta usada
 #serialName = "/dev/ttyACM0"           # Ubuntu (variacao de)
 #serialName = "/dev/tty.usbmodem1411" # Mac    (variacao de)
-serialName = "COM5"                  # Windows(variacao de)
+serialName = "COM6"                  # Windows(variacao de)
 
 
 def main():
@@ -49,6 +49,7 @@ def main():
         data = bytearray()
         total_packages = None
         serverNumber=69 
+        log=''
 
         #time.sleep(20)
 
@@ -63,7 +64,8 @@ def main():
                     ocioso = False
                     time.sleep(1)
                     
-        com1.sendData(build_pacote(2,1,total_packages,serverNumber,1)) # accept communication start
+        com1.sendData(build_pacote(2,1,total_packages,serverNumber,1))# accept communication start
+        log+=build_log(build_pacote(2,1,total_packages,serverNumber,1), True)
         
         cont = 1 # was 'ind'
         com1.rx.clearBuffer()
@@ -74,12 +76,14 @@ def main():
         while cont <= total_packages and not timeout:
             while time.time() - timer2 > 20:
                 com1.sendData(build_pacote(5,cont,total_packages,serverNumber,cont-1))
+                log+=build_log(build_pacote(5,cont,total_packages,serverNumber,cont-1, True))
                 timeout = True
             else:
+                print("Esperando pacote {}".format(cont))
                 while time.time() - timer1 > 2:
                     timer1 = time.time()
-                else:        
                     print("Esperando pacote {}".format(cont))
+                else:        
                     if com1.rx.getIsEmpty() == False:
                         rxBuffer, nrx = com1.getData(10)
                         if rxBuffer[0] == 3:
@@ -87,19 +91,29 @@ def main():
                             try:
                                 payload, nRx = com1.getData(rxBuffer[5])
                                 eop, nrx = com1.getData(4)
+                                log+=build_log(rxBuffer+payload+eop, False)
                             except:
                                 payload_overflow = True
                             finally:
                                 if eop != b'\xAA\xBB\xCC\xDD' or  payload_overflow or rxBuffer[4] != cont:
                                     com1.sendData(build_pacote(6,cont,total_packages,serverNumber,cont-1,isWrongIndex=True,rightIndex=cont))
+                                    log+=build_log(build_pacote(6,cont,total_packages,serverNumber,cont-1,isWrongIndex=True,rightIndex=cont),True)
                                 else:
                                     com1.sendData(build_pacote(4,cont,total_packages,serverNumber,cont-1))
+                                    log+=build_log(build_pacote(4,cont,total_packages,serverNumber,cont-1), True)
                                     data += payload
                                     cont += 1
+                                    timer2=time.time()
                         time.sleep(1)
                         com1.rx.clearBuffer()
 
-                        
+        
+        with open('logserver.txt','w') as f:
+            f.write(log)
+            
+        with open('recebido.md','wb') as f:
+            f.write(data)
+              
         
         # Encerra comunicação
         print("-------------------------")
