@@ -72,68 +72,46 @@ def main():
         segments.append(txBuffer[number_of_segments*114:])
         print("O número de pacotes é {}" .format(len(segments)))
 
-        ind = 0
-        isFirst=True
-        isHandshaken = False
-        isDenied = False
+        cont = 1
+        id = 69
+        inicia = False
             
-        while not isHandshaken:
+        while not inicia:
+            com1.sendData(build_pacote(1,0,len(segments),id,0))
             then = time.time()
-            # Handshake
-            com1.sendData(build_pacote(0,1,1))
             while time.time() - then < 5:
-                if com1.rx.getIsEmpty() == False:
-                    rxBuffer, nRx = com1.getData(10)
-                    if rxBuffer[0] == 1:
-                        print("Handshake realizado com sucesso")
-                        isHandshaken = True
+                if not (com1.rx.getIsEmpty()):
+                    rxBuffer, nrx = com1.getData(10)
+                    if rxBuffer[0] == 2 and id == rxBuffer[5]:
+                        inicia = True
                         break
-                    # Limpa o payload e EoP do pacote
-                    com1.rx.clearBuffer()
-                    
-            if isHandshaken:
-                break
-            
-            txt = input("Deseja continuar? (s/n)")
-            if txt.lower() == 'n':
-                isDenied = True
-                print("Comunicação negada")
-                break 
 
-        if not isDenied:
-            while ind < len(segments):
+        while cont <= len(segments):
+            com1.sendData(build_pacote(3,cont,len(segments),id,cont-1,payload=segments[cont-1]))
+            timer1 = time.time()
+            timer2 = time.time()
+            if not com1.rx.getIsEmpty():
+                rxBuffer, nrx = com1.getData(10)
+                if rxBuffer[0] == 4:
+                    cont += 1
+                if time.time() - timer1 > 5:
+                    com1.sendData(build_pacote(3,cont,len(segments),id,cont-1,payload=segments[cont-1]))
+                    timer1 = time.time()
+                else:
+                    if time.time() - timer2 > 20:
+                        com1.sendData(build_pacote(5,cont,len(segments),id,cont-1,payload=segments[cont-1]))
+                    else:
+                        if not com1.rx.getIsEmpty():
+                            rxBuffer, nrx = com1.getData(10)
+                            if rxBuffer[0] == 6:
+                                certo = rxBuffer[6]
+                                ultimo = rxBuffer[7]
+                                pacote = build_pacote(3,certo,len(segments),id,ultimo,payload = segments[certo-1])
+                                com1.sendData(pacote)
+                                timer1 = time.time()
+                                timer2 = time.time()
                 com1.rx.clearBuffer()
-                # Envia pacote
-                '''if isFirst and ind==2:
-                    pacote_quebrado=build_pacote(5, ind+1, len(segments), payload=segments[ind],tamanho_quebrado=1)
-                    com1.sendData(pacote_quebrado)
-                    isFirst=False
-                else:''' # erro de payload
-                com1.sendData(build_pacote(5, ind+1, len(segments), payload=segments[ind]))
-                    
-                print(f"Pacote {ind+1} enviado")
-                # Espera ACK
-                then = time.time()
-                while time.time() - then < 5:
-                    if com1.rx.getIsEmpty() == False:
-                        rxBuffer, nRx = com1.getData(10)
-                        print(rxBuffer)
-                        if check_data_header_client(rxBuffer,ind+1,len(segments)):
-                            print(f"ACK {ind+1} recebido")
-                            '''if ind == 2 and isFirst:
-                                ind+=2
-                                isFirst = False
-                            else:
-                                ind += 1''' # erro de indice
-                            ind+=1
-                            break
-                        else:
-                            print(f"ACK {ind+1} não recebido")
-                            ind = rxBuffer[1]
-                        
-                            
-                        com1.rx.clearBuffer()
-                    
+
 
         # Encerra comunicação
         print("-------------------------")
