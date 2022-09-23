@@ -15,6 +15,7 @@ import time
 import numpy as np
 import random
 from pacote import build_pacote,build_log
+from crc import CrcCalculator, Crc16
 
 # voce deverá descomentar e configurar a porta com através da qual ira fazer comunicaçao
 #   para saber a sua porta, execute no terminal :
@@ -33,6 +34,7 @@ def main():
         #declaramos um objeto do tipo enlace com o nome "com". Essa é a camada inferior à aplicação. Observe que um parametro
         #para declarar esse objeto é o nome da porta.
         com1 = enlace(serialName)
+        calc = CrcCalculator(Crc16.CCITT)
         
     
         # Ativa comunicacao. Inicia os threads e a comunicação seiral 
@@ -84,10 +86,12 @@ def main():
                         payload, nRx = com1.getData(rxBuffer[5])
                         eop, nrx = com1.getData(4)
                         log += build_log(rxBuffer+payload+eop,False)
+                        actual_crc = calc.calc(payload)
+                        expected_crc = rxBuffer[8] + rxBuffer[9]
                     except:
                         payload_overflow = True
                     finally:
-                        if eop != b'\xAA\xBB\xCC\xDD' or  payload_overflow or rxBuffer[4] != cont:
+                        if eop != b'\xAA\xBB\xCC\xDD' or  payload_overflow or rxBuffer[4] != cont or actual_crc != expected_crc:
                             print(eop)
                             print(payload_overflow)
                             print(rxBuffer[4] != cont)

@@ -1,4 +1,5 @@
 import time
+from crc import CrcCalculator, Crc16
 
 def build_pacote(operacao,numeroAtual,numeroTotal,id,lastPackage,payload=b'', isWrongIndex=False, rightIndex=0):
     pacote = b''
@@ -19,7 +20,9 @@ def build_pacote(operacao,numeroAtual,numeroTotal,id,lastPackage,payload=b'', is
 
     pacote += int.to_bytes(lastPackage, 1, 'big') #head 7
 
-    pacote += b'\x00\x00' #head 8,9
+    calc = CrcCalculator(Crc16.CCITT)
+    checksum = calc.calculate(pacote)
+    pacote += checksum #head 8,9
 
     pacote += payload
 
