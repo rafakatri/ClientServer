@@ -50,7 +50,6 @@ def main():
         ocioso = True
         data = bytearray()
         total_packages = None
-        caso=1
         serverNumber=69
         log ='' 
 
@@ -86,7 +85,7 @@ def main():
                         payload, nRx = com1.getData(rxBuffer[5])
                         eop, nrx = com1.getData(4)
                         log += build_log(rxBuffer+payload+eop,False)
-                        actual_crc = calc.calc(payload)
+                        actual_crc = calc.calculate_checksum(payload)
                         expected_crc = rxBuffer[8] + rxBuffer[9]
                     except:
                         payload_overflow = True
@@ -128,7 +127,7 @@ def main():
         with open('recebido.md','wb') as f:
             f.write(data)
 
-        with open(f'log_server{str(caso)}.txt','w') as f:
+        with open(f'log.txt','w') as f:
             f.write(log)
                         
         # Encerra comunicação

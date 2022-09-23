@@ -21,7 +21,7 @@ def build_pacote(operacao,numeroAtual,numeroTotal,id,lastPackage,payload=b'', is
     pacote += int.to_bytes(lastPackage, 1, 'big') #head 7
 
     calc = CrcCalculator(Crc16.CCITT)
-    checksum = calc.calculate(pacote)
+    checksum = calc.calculate_checksum(pacote)
     pacote += checksum #head 8,9
 
     pacote += payload
