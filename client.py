@@ -24,7 +24,7 @@ from pacote import *
 #use uma das 3 opcoes para atribuir à variável a porta usada
 #serialName = "/dev/ttyACM0"           # Ubuntu (variacao de)
 #serialName = "/dev/tty.usbmodem1411" # Mac    (variacao de)
-serialName = "COM6"                  # Windows(variacao de)
+serialName = "COM5"                  # Windows(variacao de)
 
 
 def main():
@@ -57,7 +57,7 @@ def main():
         # Byte startAll
         txBuffer = bytearray()
 
-        with open("datagrama.txt", "rb") as f:
+        with open("datagrama.md", "rb") as f:
             txBuffer += f.read()
 
         print("meu array de bytes tem tamanho {}" .format(len(txBuffer)))
@@ -75,43 +75,79 @@ def main():
         cont = 1
         id = 69
         inicia = False
+        timeout = False
+        log = ''
             
         while not inicia:
-            com1.sendData(build_pacote(1,0,len(segments),id,0))
+            com1.sendData(build_pacote(1,cont,len(segments),id,1))
+            log += build_log(build_pacote(1,cont,len(segments),id,1),True)
             then = time.time()
             while time.time() - then < 5:
                 if not (com1.rx.getIsEmpty()):
                     rxBuffer, nrx = com1.getData(10)
+                    log += build_log(rxBuffer,False)
                     if rxBuffer[0] == 2 and id == rxBuffer[5]:
                         inicia = True
+                        print("Recebeu Handshake")
                         break
+        
+        com1.rx.clearBuffer()
 
-        while cont <= len(segments):
+        while cont <= len(segments) and not timeout:
+            print('Primeira tentativa de envio do pacote {}' .format(cont))
             com1.sendData(build_pacote(3,cont,len(segments),id,cont-1,payload=segments[cont-1]))
+            log += build_log(build_pacote(3,cont,len(segments),id,cont-1,payload=segments[cont-1]),True)
             timer1 = time.time()
             timer2 = time.time()
-            if not com1.rx.getIsEmpty():
-                rxBuffer, nrx = com1.getData(10)
-                if rxBuffer[0] == 4:
-                    cont += 1
+            while True:
+                if not com1.rx.getIsEmpty():
+                    print('Pacote {} de {}' .format(cont, len(segments)))
+                    print("Recebeu algo")
+                    rxBuffer, nrx = com1.getData(10)
+                    log += build_log(rxBuffer,False)
+                    if rxBuffer[0] == 4:
+                        print("Recebeu ACK")
+                        cont += 1
+                        print("Pacote {} recebido com sucesso" .format(cont-1))
+                        com1.rx.clearBuffer()
+                        break
+                    com1.rx.clearBuffer()
                 if time.time() - timer1 > 5:
+                    print('Tentativa de envio do pacote {}' .format(cont))
                     com1.sendData(build_pacote(3,cont,len(segments),id,cont-1,payload=segments[cont-1]))
+                    log += build_log(build_pacote(3,cont,len(segments),id,cont-1,payload=segments[cont-1]),True)
                     timer1 = time.time()
+                if time.time() - timer2 > 20:
+                    print('timeout')
+                    com1.sendData(build_pacote(5,cont,len(segments),id,cont-1,payload=segments[cont-1]))
+                    log += build_log(build_pacote(5,cont,len(segments),id,cont-1,payload=segments[cont-1]),True)
+                    timeout = True
+                    break
                 else:
-                    if time.time() - timer2 > 20:
-                        com1.sendData(build_pacote(5,cont,len(segments),id,cont-1,payload=segments[cont-1]))
-                    else:
-                        if not com1.rx.getIsEmpty():
-                            rxBuffer, nrx = com1.getData(10)
-                            if rxBuffer[0] == 6:
-                                certo = rxBuffer[6]
-                                ultimo = rxBuffer[7]
-                                pacote = build_pacote(3,certo,len(segments),id,ultimo,payload = segments[certo-1])
-                                com1.sendData(pacote)
-                                timer1 = time.time()
-                                timer2 = time.time()
-                com1.rx.clearBuffer()
+                    if not com1.rx.getIsEmpty():
+                        rxBuffer, nrx = com1.getData(10)
+                        log += build_log(rxBuffer,False)
+                        if rxBuffer[0] == 6:
+                            print('Correção de erro')
+                            certo = rxBuffer[6]
+                            ultimo = rxBuffer[7]
+                            com1.rx.clearBuffer()
+                            pacote = build_pacote(3,certo,len(segments),id,ultimo,payload = segments[certo-1])
+                            com1.sendData(pacote)
+                            log += build_log(pacote,True)
+                            timer1 = time.time()
+                            timer2 = time.time()
+                        if rxBuffer[0] == 4:
+                            print("Recebeu ACK")
+                            cont += 1
+                            print("Pacote {} recebido com sucesso" .format(cont-1))
+                            com1.rx.clearBuffer()
+                            break
+                        com1.rx.clearBuffer()
 
+
+        with open("log.txt", "w") as f:
+            f.write(log)
 
         # Encerra comunicação
         print("-------------------------")
