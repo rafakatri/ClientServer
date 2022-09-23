@@ -17,14 +17,14 @@ byte4 ->  número do pacote sendo enviado
 
 byte5 -> se tipo for handshake: id do arquivo (crie um) 
 se tipo for dados: tamanho do payload
-
+ 
 byte6 -> pacote solicitado para recomeço quando há erro no envio
 
 byte7 -> último pacote recebido com sucesso.
 
-byte8 -> x00
+byte8 -> CRC
 
-byte9 -> x00
+byte9 -> CRC
 
 payload -> (b'\x??')*(0-114)
 

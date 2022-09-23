@@ -50,6 +50,7 @@ def main():
         ocioso = True
         data = bytearray()
         total_packages = None
+        isFirst=True
         serverNumber=69
         log ='' 
 
@@ -84,10 +85,14 @@ def main():
                     try:
                         payload, nRx = com1.getData(rxBuffer[5])
                         eop, nrx = com1.getData(4)
+                        if isFirst:
+                            payload=len(payload)*b'\xFF'
+                            isFirst=False
                         log += build_log(rxBuffer+payload+eop,False)
-                        actual_crc = calc.calculate_checksum(payload)
-                        expected_crc = rxBuffer[8] + rxBuffer[9]
-                    except:
+                        actual_crc = int.to_bytes(calc.calculate_checksum(payload),2,'big')
+                        expected_crc = int.to_bytes(rxBuffer[8],1,'big')+int.to_bytes(rxBuffer[9],1,'big')
+                    except Exception as e:
+                        print(e)
                         payload_overflow = True
                     finally:
                         if eop != b'\xAA\xBB\xCC\xDD' or  payload_overflow or rxBuffer[4] != cont or actual_crc != expected_crc:

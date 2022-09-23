@@ -1,6 +1,8 @@
 import time
 from crc import CrcCalculator, Crc16
 
+calc = CrcCalculator(Crc16.CCITT)
+
 def build_pacote(operacao,numeroAtual,numeroTotal,id,lastPackage,payload=b'', isWrongIndex=False, rightIndex=0):
     pacote = b''
     pacote += int.to_bytes(operacao, 1, 'big') # head 0
@@ -20,8 +22,8 @@ def build_pacote(operacao,numeroAtual,numeroTotal,id,lastPackage,payload=b'', is
 
     pacote += int.to_bytes(lastPackage, 1, 'big') #head 7
 
-    calc = CrcCalculator(Crc16.CCITT)
-    checksum = int.to_bytes(calc.calculate_checksum(pacote), 2, 'big')
+    
+    checksum = int.to_bytes(calc.calculate_checksum(payload), 2, 'big')
     pacote += checksum #head 8,9
 
     pacote += payload
@@ -90,7 +92,8 @@ if com1.rx.getIsEmpty() == False:
 
 
 if __name__ =="__main__":
-    print(build_pacote(3,1,2,payload=b'\xFF\xFF',id=69,lastPackage=0))
+    print(build_pacote(3,1,2,payload=b'\xFF\xFF'*4,id=69,lastPackage=0)[8:10])
+    print(int.to_bytes(calc.calculate_checksum(b'\xFF\xFF'*4),2, 'big'))
     print(build_log(build_pacote(3,1,2,payload=b'\xFF\xFF',id=69,lastPackage=0),True))
     
     
