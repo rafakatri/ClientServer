@@ -50,7 +50,7 @@ def main():
         ocioso = True
         data = bytearray()
         total_packages = None
-        isFirst=True
+        isFirst=False
         serverNumber=69
         log ='' 
 
@@ -78,7 +78,7 @@ def main():
 
         while cont <= total_packages:
             if com1.rx.getIsEmpty() == False:
-                print("Pacote desejado: {}".format(cont))
+                print(f"Pacote desejado: {cont}")
                 rxBuffer, nrx = com1.getData(10)
                 if rxBuffer[0] == 3:
                     payload_overflow = False
@@ -96,15 +96,12 @@ def main():
                         payload_overflow = True
                     finally:
                         if eop != b'\xAA\xBB\xCC\xDD' or  payload_overflow or rxBuffer[4] != cont or actual_crc != expected_crc:
-                            print(eop)
-                            print(payload_overflow)
-                            print(rxBuffer[4] != cont)
-                            print(cont)
-                            print("Pacote {} corrompido".format(cont))
+                            print(f'EOP : {eop}\nPayload overflow = {payload_overflow}\nIndice incorreto = {rxBuffer[4] != cont}\nIndice={cont}')
+                            print(f"Pacote {cont} corrompido")
                             com1.sendData(build_pacote(6,cont,total_packages,serverNumber,cont-1,isWrongIndex=True,rightIndex=cont))
                             log += build_log(build_pacote(6,cont,total_packages,serverNumber,cont-1,isWrongIndex=True,rightIndex=cont),True)
                         else:
-                            print("Pacote {} recebido".format(cont))
+                            print(f"Pacote {cont} recebido")
                             #time.sleep(25)
                             com1.sendData(build_pacote(4,cont,total_packages,serverNumber,cont-1))
                             log += build_log(build_pacote(4,cont,total_packages,serverNumber,cont-1),True)
@@ -121,7 +118,7 @@ def main():
                 log += build_log(build_pacote(5,cont,total_packages,serverNumber,cont-1),True)
                 break
             if time.time() - timer1 > 2:
-                print("Pacote {} reenviado".format(cont))
+                print(f"Pacote {cont} reenviado")
                 com1.sendData(build_pacote(4,cont,total_packages,serverNumber,cont-1))
                 log += build_log(build_pacote(4,cont,total_packages,serverNumber,cont-1),True)
                 timer1 = time.time()
