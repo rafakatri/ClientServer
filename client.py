@@ -77,6 +77,7 @@ def main():
         inicia = False
         timeout = False
         log = ''
+        isFirst = True
             
         while not inicia:
             com1.sendData(build_pacote(1,cont,len(segments),id,1))
@@ -115,11 +116,13 @@ def main():
                 if time.time() - timer1 > 5:
                     print('Tentativa de envio do pacote {}' .format(cont))
                     com1.sendData(build_pacote(3,cont,len(segments),id,cont-1,payload=segments[cont-1]))
+                    com1.rx.clearBuffer()
                     log += build_log(build_pacote(3,cont,len(segments),id,cont-1,payload=segments[cont-1]),True)
                     timer1 = time.time()
                 if time.time() - timer2 > 20:
                     print('timeout')
                     com1.sendData(build_pacote(5,cont,len(segments),id,cont-1,payload=segments[cont-1]))
+                    com1.rx.clearBuffer()
                     log += build_log(build_pacote(5,cont,len(segments),id,cont-1,payload=segments[cont-1]),True)
                     timeout = True
                     break
@@ -130,6 +133,7 @@ def main():
                         if rxBuffer[0] == 6:
                             print('Correção de erro')
                             certo = rxBuffer[6]
+                            cont = certo
                             ultimo = rxBuffer[7]
                             com1.rx.clearBuffer()
                             pacote = build_pacote(3,certo,len(segments),id,ultimo,payload = segments[certo-1])
