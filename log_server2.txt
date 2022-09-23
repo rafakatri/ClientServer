@@ -1,0 +1,17 @@
+13:16:14 09/23/22 / receb / type 1 / 14 bytes / 
+13:16:15 09/23/22 / envio / type 2 / 14 bytes / 
+13:16:16 09/23/22 / receb / type 3 / 128 bytes / 2 of 6 / 
+13:16:17 09/23/22 / envio / type 6 / 14 bytes / 
+13:16:18 09/23/22 / envio / type 4 / 14 bytes / 
+13:16:18 09/23/22 / receb / type 3 / 128 bytes / 1 of 6 / 
+13:16:18 09/23/22 / envio / type 4 / 14 bytes / 
+13:16:19 09/23/22 / receb / type 3 / 128 bytes / 2 of 6 / 
+13:16:19 09/23/22 / envio / type 4 / 14 bytes / 
+13:16:20 09/23/22 / receb / type 3 / 128 bytes / 3 of 6 / 
+13:16:20 09/23/22 / envio / type 4 / 14 bytes / 
+13:16:21 09/23/22 / receb / type 3 / 128 bytes / 4 of 6 / 
+13:16:22 09/23/22 / envio / type 4 / 14 bytes / 
+13:16:23 09/23/22 / receb / type 3 / 128 bytes / 5 of 6 / 
+13:16:23 09/23/22 / envio / type 4 / 14 bytes / 
+13:16:24 09/23/22 / receb / type 3 / 121 bytes / 6 of 6 / 
+13:16:24 09/23/22 / envio / type 4 / 14 bytes / 

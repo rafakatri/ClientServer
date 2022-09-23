@@ -14,7 +14,7 @@ from enlace import *
 import time
 import numpy as np
 import random
-from pacote import build_pacote,build_log, check_package
+from pacote import build_pacote,build_log
 
 # voce deverá descomentar e configurar a porta com através da qual ira fazer comunicaçao
 #   para saber a sua porta, execute no terminal :
@@ -24,7 +24,7 @@ from pacote import build_pacote,build_log, check_package
 #use uma das 3 opcoes para atribuir à variável a porta usada
 #serialName = "/dev/ttyACM0"           # Ubuntu (variacao de)
 #serialName = "/dev/tty.usbmodem1411" # Mac    (variacao de)
-serialName = "COM4"                  # Windows(variacao de)
+serialName = "COM6"                  # Windows(variacao de)
 
 
 def main():
@@ -48,6 +48,7 @@ def main():
         ocioso = True
         data = bytearray()
         total_packages = None
+        caso=1
         serverNumber=69
         log ='' 
 
@@ -56,9 +57,8 @@ def main():
         while ocioso:
             if com1.rx.getIsEmpty() == False:
                 rxBuffer, nRx = com1.getData(10)
-                log += build_log(rxBuffer,False)
                 eop,nrx = com1.getData(4) #TODO Revisars check de segurança do EOP
-                log += build_log(eop,False)
+                log += build_log(rxBuffer+eop,False)
                 
                 if rxBuffer[0] == 1 and rxBuffer[5] == 69 and eop ==b'\xAA\xBB\xCC\xDD': # if is request comunication start 
                     print("Handshake recebido")
@@ -78,14 +78,12 @@ def main():
             if com1.rx.getIsEmpty() == False:
                 print("Pacote desejado: {}".format(cont))
                 rxBuffer, nrx = com1.getData(10)
-                log += build_log(rxBuffer,False)
                 if rxBuffer[0] == 3:
                     payload_overflow = False
                     try:
                         payload, nRx = com1.getData(rxBuffer[5])
-                        log += build_log(payload,False)
                         eop, nrx = com1.getData(4)
-                        log += build_log(eop,False)
+                        log += build_log(rxBuffer+payload+eop,False)
                     except:
                         payload_overflow = True
                     finally:
@@ -99,6 +97,7 @@ def main():
                             log += build_log(build_pacote(6,cont,total_packages,serverNumber,cont-1,isWrongIndex=True,rightIndex=cont),True)
                         else:
                             print("Pacote {} recebido".format(cont))
+                            #time.sleep(25)
                             com1.sendData(build_pacote(4,cont,total_packages,serverNumber,cont-1))
                             log += build_log(build_pacote(4,cont,total_packages,serverNumber,cont-1),True)
                             data += payload
@@ -125,7 +124,7 @@ def main():
         with open('recebido.md','wb') as f:
             f.write(data)
 
-        with open('log.txt','w') as f:
+        with open(f'log_server{str(caso)}.txt','w') as f:
             f.write(log)
                         
         # Encerra comunicação
